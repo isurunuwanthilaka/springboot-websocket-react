@@ -25,96 +25,95 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DemoApplicationTests {
-		@LocalServerPort
-		private int port;
+    @LocalServerPort
+    private int port;
 
-		private SockJsClient sockJsClient;
+    private SockJsClient sockJsClient;
 
-		private WebSocketStompClient stompClient;
+    private WebSocketStompClient stompClient;
 
-		private final WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
+    private final WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
 
-		@BeforeEach
-		public void setup() {
-			List<Transport> transports = new ArrayList<>();
-			transports.add(new WebSocketTransport(new StandardWebSocketClient()));
-			this.sockJsClient = new SockJsClient(transports);
-			this.stompClient = new WebSocketStompClient(sockJsClient);
-			this.stompClient.setMessageConverter(new MappingJackson2MessageConverter());
-		}
+    @BeforeEach
+    public void setup() {
+        List<Transport> transports = new ArrayList<>();
+        transports.add(new WebSocketTransport(new StandardWebSocketClient()));
+        this.sockJsClient = new SockJsClient(transports);
+        this.stompClient = new WebSocketStompClient(sockJsClient);
+        this.stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+    }
 
-		@Test
-		public void getGeneralMessage() throws Exception {
+    @Test
+    public void getGeneralMessage() throws Exception {
 
-			final CountDownLatch latch = new CountDownLatch(1);
-			final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
 
-			StompSessionHandler handler = new TestSessionHandler(failure) {
+        StompSessionHandler handler = new TestSessionHandler(failure) {
 
-				@Override
-				public void afterConnected(final StompSession session, StompHeaders connectedHeaders) {
-					session.subscribe("/topic/general", new StompFrameHandler() {
-						@Override
-						public Type getPayloadType(StompHeaders headers) {
-							return TextMessageDto.class;
-						}
+            @Override
+            public void afterConnected(final StompSession session, StompHeaders connectedHeaders) {
+                session.subscribe("/topic/general", new StompFrameHandler() {
+                    @Override
+                    public Type getPayloadType(StompHeaders headers) {
+                        return TextMessageDto.class;
+                    }
 
-						@Override
-						public void handleFrame(StompHeaders headers, Object payload) {
-							TextMessageDto textMessageDto = (TextMessageDto) payload;
-							try {
-								assertEquals("test message", textMessageDto.getMessage());
-							} catch (Throwable t) {
-								failure.set(t);
-							} finally {
-								session.disconnect();
-								latch.countDown();
-							}
-						}
-					});
-					try {
-						session.send("/app/general", TextMessageDto.builder().message("test message").build());
-					} catch (Throwable t) {
-						failure.set(t);
-						latch.countDown();
-					}
-				}
-			};
+                    @Override
+                    public void handleFrame(StompHeaders headers, Object payload) {
+                        TextMessageDto textMessageDto = (TextMessageDto) payload;
+                        try {
+                            assertEquals("test message", textMessageDto.getMessage());
+                        } catch (Throwable t) {
+                            failure.set(t);
+                        } finally {
+                            session.disconnect();
+                            latch.countDown();
+                        }
+                    }
+                });
+                try {
+                    session.send("/app/general", TextMessageDto.builder().message("test message").build());
+                } catch (Throwable t) {
+                    failure.set(t);
+                    latch.countDown();
+                }
+            }
+        };
 
-			this.stompClient.connect("ws://localhost:{port}/notification", this.headers, handler, this.port);
+        this.stompClient.connect("ws://localhost:{port}/notification", this.headers, handler, this.port);
 
-			if (latch.await(3, TimeUnit.SECONDS)) {
-				if (failure.get() != null) {
-					throw new AssertionError("", failure.get());
-				}
-			}
-			else {
-				fail("General msg not received");
-			}
+        if (latch.await(3, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+        } else {
+            fail("General msg not received");
+        }
 
-		}
+    }
 
-		private class TestSessionHandler extends StompSessionHandlerAdapter {
+    private class TestSessionHandler extends StompSessionHandlerAdapter {
 
-			private final AtomicReference<Throwable> failure;
+        private final AtomicReference<Throwable> failure;
 
-			public TestSessionHandler(AtomicReference<Throwable> failure) {
-				this.failure = failure;
-			}
+        public TestSessionHandler(AtomicReference<Throwable> failure) {
+            this.failure = failure;
+        }
 
-			@Override
-			public void handleFrame(StompHeaders headers, Object payload) {
-				this.failure.set(new Exception(headers.toString()));
-			}
+        @Override
+        public void handleFrame(StompHeaders headers, Object payload) {
+            this.failure.set(new Exception(headers.toString()));
+        }
 
-			@Override
-			public void handleException(StompSession s, StompCommand c, StompHeaders h, byte[] p, Throwable ex) {
-				this.failure.set(ex);
-			}
+        @Override
+        public void handleException(StompSession s, StompCommand c, StompHeaders h, byte[] p, Throwable ex) {
+            this.failure.set(ex);
+        }
 
-			@Override
-			public void handleTransportError(StompSession session, Throwable ex) {
-				this.failure.set(ex);
-			}
-		}
-	}
+        @Override
+        public void handleTransportError(StompSession session, Throwable ex) {
+            this.failure.set(ex);
+        }
+    }
+}
