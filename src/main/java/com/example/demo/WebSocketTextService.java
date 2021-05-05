@@ -12,11 +12,11 @@ public class WebSocketTextService {
     @Autowired
     SimpMessagingTemplate template;
 
-    @Scheduled(fixedRate = 2000)
-    public void messageRunner() {
-        Random rand = new Random();
-        int upperbound = 100;
-        template.convertAndSend(Topic.MESSAGE, TextMessageDto.builder().message(String.valueOf(rand.nextInt(upperbound))).build());
-    }
+//    @Scheduled(fixedRate = 2000)
+//    public void messageRunner() {
+//        Random rand = new Random();
+//        int upperbound = 100;
+//        template.convertAndSend(Topic.GENERAL_MESSAGE, TextMessageDto.builder().message(String.valueOf(rand.nextInt(upperbound))).build());
+//    }
 
 }

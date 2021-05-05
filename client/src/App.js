@@ -1,19 +1,25 @@
 import React, { useState } from "react";
 import SockJsClient from "react-stomp";
+
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
+
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
 import Header from "./components/Header/Header";
 
-const SOCKET_URL = "http://localhost:8080/socket";
-const TOPIC = "/topic/message";
+const SOCKET_URL = "http://localhost:8080/notification";
+const GENERAL_TOPIC = "/topic/general";
 
 const App = () => {
-  let clientRef;
+  let generalClientRef;
   const [message, setMessage] = useState("");
   const [text, setText] = useState("");
 
   const onConnected = () => {
     console.log("Connected.");
+  };
+  const onDisconnected = () => {
+    console.log("Disconnected.");
   };
 
   const onMessageReceived = (msg) => {
@@ -21,7 +27,10 @@ const App = () => {
   };
 
   const sendMessage = (msg) => {
-    clientRef.sendMessage(TOPIC, JSON.stringify({ "message": msg }));
+    generalClientRef.sendMessage(
+      GENERAL_TOPIC,
+      JSON.stringify({ message: msg })
+    );
   };
   const textChangeHandler = (event) => {
     setText(event.target.value);
@@ -29,7 +38,6 @@ const App = () => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    console.log(text);
     sendMessage(text);
   };
 
@@ -44,16 +52,16 @@ const App = () => {
     >
       <SockJsClient
         url={SOCKET_URL}
-        topics={[TOPIC]}
+        topics={[GENERAL_TOPIC]}
         onConnect={onConnected}
-        onDisconnect={console.log("Disconnected.")}
+        onDisconnect={onDisconnected}
         onMessage={(msg) => onMessageReceived(msg)}
         debug={false}
         ref={(client) => {
-          clientRef = client;
+          generalClientRef = client;
         }}
       />
-      <Header/>
+      <Header />
       <Row>
         <Card
           border="dark"
@@ -66,39 +74,30 @@ const App = () => {
         >
           <Form>
             <Form.Group as={Row} controlId="formPlaintextMessage">
-              <Form.Label column sm="2"
-                style={{
-                backgroundColor:"#008b8b",
-                borderColor: "rgb(0,0,0)",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                  borderRadius: "4px",
-              }}
-              >
-                Message
+              <Form.Label column sm="3" className="cbg">
+                General Message
               </Form.Label>
-              <Col sm="8">
+              <Col sm="7">
                 <Form.Control
                   type="text"
-                  placeholder="type a message to send to the topic"
+                  placeholder="type a message to send to the general chanel"
                   onChange={textChangeHandler}
                   style={{
-                borderColor: "rgb(0,0,0)",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderRadius: "4px",
-              }}
+                    borderColor: "rgb(0,0,0)",
+                    borderStyle: "solid",
+                    borderWidth: "1px",
+                    borderRadius: "4px",
+                  }}
                 />
               </Col>
-              <Button sm="2"
-                style={{
-                borderColor: "rgb(0,0,0)",
-                borderStyle: "solid",
-                backgroundColor:"#008b8b",
-                }}
-                type="submit" onClick={submitHandler}>
-              Send
-            </Button>
+              <Button
+                sm="2"
+                className="cbg"
+                type="submit"
+                onClick={submitHandler}
+              >
+                Send
+              </Button>
             </Form.Group>
           </Form>
         </Card>
@@ -115,25 +114,20 @@ const App = () => {
           <Card.Body>
             <Card.Title
               style={{
-                backgroundColor:"#008b8b",
+                backgroundColor: "#008b8b",
                 margin: "0rem 10rem .5em 10rem",
-                borderColor: "rgb(0,0,0)",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderRadius: "4px",
-                padding:"4px",
+                padding: "4px",
               }}
-            >Messages on **{TOPIC}**</Card.Title>
+              className="cbg"
+            >
+              Messages on General Channel
+            </Card.Title>
             <Card.Text
               style={{
                 margin: "0rem 10rem 0rem 10rem",
-                borderColor: "rgb(0,0,0)",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                borderRadius: "4px",
-                backgroundColor: "#008b8b",
-                padding:"4px",
+                padding: "4px",
               }}
+              className="cbg"
             >
               {message}
             </Card.Text>
